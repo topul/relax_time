@@ -1,5 +1,8 @@
 # Timer App
 
+![image](https://github.com/user-attachments/assets/e14888d7-e528-4f49-adc3-f81635e4f3d7)
+
+
 A simple yet powerful timer application built with Flutter.
 
 ## Features
