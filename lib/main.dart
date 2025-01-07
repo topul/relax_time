@@ -1,6 +1,29 @@
 import 'package:flutter/material.dart';
+import 'package:window_manager/window_manager.dart';
+import 'dart:io' show Platform;
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
+    await windowManager.ensureInitialized();
+
+    WindowOptions windowOptions = const WindowOptions(
+      size: Size(320, 180),
+      minimumSize: Size(320, 180),
+      maximumSize: Size(320, 180),
+      center: true, // 窗口居中显示
+      skipTaskbar: false,
+      titleBarStyle: TitleBarStyle.normal,
+      alwaysOnTop: true,
+    );
+
+    await windowManager.waitUntilReadyToShow(windowOptions, () async {
+      await windowManager.show();
+      await windowManager.focus();
+    });
+  }
+
   runApp(const MyApp());
 }
 
