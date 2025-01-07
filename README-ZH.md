@@ -1,5 +1,7 @@
 # 计时器应用
 
+![image](https://github.com/user-attachments/assets/e14888d7-e528-4f49-adc3-f81635e4f3d7)
+
 一个简单但功能强大的计时器应用，使用 Flutter 开发。
 
 ## 功能特点
