@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'dart:async';
 import 'package:window_manager/window_manager.dart';
@@ -90,23 +92,24 @@ class _TimerPageState extends State<TimerPage> {
               child: Stack(
                 children: [
                   // 关闭按钮
-                  Positioned(
-                    right: 16,
-                    top: 0,
-                    child: IconButton(
-                      onPressed: () {
-                        windowManager.close();
-                      },
-                      icon: const Icon(
-                        Icons.close,
-                        size: 20,
-                        color: Colors.white,
+                  if (Platform.isWindows)
+                    Positioned(
+                      right: 16,
+                      top: 0,
+                      child: IconButton(
+                        onPressed: () {
+                          windowManager.close();
+                        },
+                        icon: const Icon(
+                          Icons.close,
+                          size: 20,
+                          color: Colors.white,
+                        ),
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
+                        splashRadius: 16,
                       ),
-                      padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(),
-                      splashRadius: 16,
                     ),
-                  ),
                   // 主要内容
                   Center(
                     child: Column(
