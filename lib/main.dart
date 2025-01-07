@@ -10,13 +10,14 @@ void main() async {
     await windowManager.ensureInitialized();
 
     WindowOptions windowOptions = const WindowOptions(
-      size: Size(320, 220),
-      minimumSize: Size(320, 220),
-      maximumSize: Size(320, 220),
-      center: true, // 窗口居中显示
+      size: Size(320, 184),
+      minimumSize: Size(320, 184),
+      maximumSize: Size(320, 184),
+      center: true,
       skipTaskbar: false,
-      titleBarStyle: TitleBarStyle.normal,
+      titleBarStyle: TitleBarStyle.hidden,
       alwaysOnTop: true,
+      backgroundColor: Colors.transparent,
     );
     windowManager.setMaximizable(false);
     windowManager.setMinimizable(false);

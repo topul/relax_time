@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
+import 'package:window_manager/window_manager.dart';
 
 class TimerPage extends StatefulWidget {
   const TimerPage({super.key});
@@ -66,54 +67,84 @@ class _TimerPageState extends State<TimerPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              Colors.red.shade200,
-              Colors.red.shade100,
-            ],
+      backgroundColor: Colors.transparent,
+      body: GestureDetector(
+        onPanStart: (details) {
+          windowManager.startDragging();
+        },
+        child: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [
+                Colors.red.shade200,
+                Colors.red.shade100,
+              ],
+            ),
+            borderRadius: BorderRadius.circular(8),
           ),
-        ),
-        child: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 16.0),
-            child: Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
+          child: SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 16.0),
+              child: Stack(
                 children: [
-                  Text(
-                    _formatTime(_secondsRemaining),
-                    style: const TextStyle(
-                      fontSize: 60,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
+                  // 关闭按钮
+                  Positioned(
+                    right: 16,
+                    top: 0,
+                    child: IconButton(
+                      onPressed: () {
+                        windowManager.close();
+                      },
+                      icon: const Icon(
+                        Icons.close,
+                        size: 20,
+                        color: Colors.white,
+                      ),
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                      splashRadius: 16,
                     ),
                   ),
-                  const SizedBox(height: 16),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      IconButton(
-                        onPressed: _isRunning ? _pauseTimer : _startTimer,
-                        icon: Icon(
-                          _isRunning ? Icons.pause : Icons.play_arrow,
-                          size: 28,
-                          color: Colors.white,
+                  // 主要内容
+                  Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          _formatTime(_secondsRemaining),
+                          style: const TextStyle(
+                            fontSize: 60,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
                         ),
-                      ),
-                      const SizedBox(width: 16),
-                      IconButton(
-                        onPressed: _resetTimer,
-                        icon: const Icon(
-                          Icons.refresh,
-                          size: 28,
-                          color: Colors.white,
+                        const SizedBox(height: 16),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            IconButton(
+                              onPressed: _isRunning ? _pauseTimer : _startTimer,
+                              icon: Icon(
+                                _isRunning ? Icons.pause : Icons.play_arrow,
+                                size: 28,
+                                color: Colors.white,
+                              ),
+                            ),
+                            const SizedBox(width: 16),
+                            IconButton(
+                              onPressed: _resetTimer,
+                              icon: const Icon(
+                                Icons.refresh,
+                                size: 28,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ],
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ],
               ),
