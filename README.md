@@ -1,16 +1,23 @@
-# relax_time
+# Timer App
 
-A new Flutter project.
+A simple yet powerful timer application built with Flutter.
 
-## Getting Started
+## Features
 
-This project is a starting point for a Flutter application.
+- Precise timing functionality
+- Clean and intuitive user interface
+- Pause and resume support
+- Timer completion notifications
 
-A few resources to get you started if this is your first Flutter project:
+## Tech Stack
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+- Flutter
+- Dart
+- Provider (State Management)
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+## Project Structure
+
+- lib/main.dart: Main entry file
+- lib/pages/timer_page.dart: Timer page
+- lib/providers/timer_provider.dart: Timer state management
+- lib/utils/window_manager.dart: Window manager
