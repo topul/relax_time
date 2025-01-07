@@ -17,6 +17,9 @@ void main() async {
       titleBarStyle: TitleBarStyle.normal,
       alwaysOnTop: true,
     );
+    windowManager.setMaximizable(false);
+    windowManager.setMinimizable(false);
+    windowManager.setResizable(false);
 
     await windowManager.waitUntilReadyToShow(windowOptions, () async {
       await windowManager.show();
