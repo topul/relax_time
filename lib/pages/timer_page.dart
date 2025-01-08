@@ -1,8 +1,12 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:async';
 import 'package:window_manager/window_manager.dart';
+import '../models/timer_record.dart';
+import '../widgets/history_dialog.dart';
 
 class TimerPage extends StatefulWidget {
   const TimerPage({super.key});
@@ -20,24 +24,48 @@ class _TimerPageState extends State<TimerPage> {
   Timer? _timer;
   bool _isRunning = false;
   bool _showSettings = false;
+  bool _showHistory = false;
+  DateTime? _currentStartTime;
+  List<TimerRecord> _history = [];
 
   @override
-  void dispose() {
-    _timer?.cancel();
-    super.dispose();
+  void initState() {
+    super.initState();
+    _loadHistory();
+  }
+
+  Future<void> _loadHistory() async {
+    final prefs = await SharedPreferences.getInstance();
+    final historyJson = prefs.getStringList('timer_history') ?? [];
+    setState(() {
+      _history = historyJson
+          .map((json) =>
+              TimerRecord.fromJson(Map<String, dynamic>.from(jsonDecode(json))))
+          .toList();
+    });
+  }
+
+  Future<void> _saveHistory() async {
+    final prefs = await SharedPreferences.getInstance();
+    final historyJson =
+        _history.map((record) => jsonEncode(record.toJson())).toList();
+    await prefs.setStringList('timer_history', historyJson);
   }
 
   void _startTimer() {
     if (_timer != null) return;
 
+    _currentStartTime = DateTime.now();
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
       setState(() {
         if (_secondsRemaining > 0) {
           _secondsRemaining--;
         } else {
+          _addToHistory(true);
           _timer?.cancel();
           _timer = null;
           _isRunning = false;
+          _currentStartTime = null;
         }
       });
     });
@@ -50,9 +78,30 @@ class _TimerPageState extends State<TimerPage> {
   void _pauseTimer() {
     _timer?.cancel();
     _timer = null;
+    _addToHistory(false);
     setState(() {
       _isRunning = false;
+      _currentStartTime = null;
     });
+  }
+
+  void _addToHistory(bool completed) {
+    if (_currentStartTime != null) {
+      final actualTime = _selectedMinutes * 60 - _secondsRemaining; // 计算实际时长
+      final record = TimerRecord(
+        startTime: _currentStartTime!,
+        duration: _selectedMinutes,
+        actualTime: actualTime,
+        completed: completed,
+      );
+      setState(() {
+        _history.insert(0, record);
+        if (_history.length > 10) {
+          _history.removeLast();
+        }
+      });
+      _saveHistory();
+    }
   }
 
   void _resetTimer() {
@@ -80,12 +129,30 @@ class _TimerPageState extends State<TimerPage> {
     return '${minutes.toString().padLeft(2, '0')}:${remainingSeconds.toString().padLeft(2, '0')}';
   }
 
+  String _formatDateTime(DateTime dateTime) {
+    return '${dateTime.month}/${dateTime.day} ${dateTime.hour}:${dateTime.minute.toString().padLeft(2, '0')}';
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.transparent,
       body: GestureDetector(
         onPanStart: (details) {
+          // 获取设置面板的位置和大小
+          if (_showSettings) {
+            final settingsPanelRect = Rect.fromLTWH(
+              16, // left padding
+              0, // 从顶部开始
+              224, // width (200 + 24 padding)
+              MediaQuery.of(context).size.height, // 整个窗口高度
+            );
+
+            // 如果点击在设置面板内，不触发窗口拖动
+            if (settingsPanelRect.contains(details.globalPosition)) {
+              return;
+            }
+          }
           windowManager.startDragging();
         },
         child: Container(
@@ -100,63 +167,169 @@ class _TimerPageState extends State<TimerPage> {
             ),
             borderRadius: BorderRadius.circular(8),
           ),
-          child: SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.only(top: 4.0),
-              child: Stack(
-                children: [
-                  if (Platform.isWindows)
-                    Positioned(
-                      right: 16,
-                      top: 0,
-                      child: IconButton(
-                        onPressed: () {
-                          windowManager.close();
-                        },
-                        icon: const Icon(
-                          Icons.close,
-                          size: 16,
+          child: Stack(
+            children: [
+              // 主要内容（倒计时和控制按钮）
+              Positioned.fill(
+                child: Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        _formatTime(_secondsRemaining),
+                        style: const TextStyle(
+                          fontSize: 60,
+                          fontWeight: FontWeight.bold,
                           color: Colors.white,
                         ),
-                        padding: EdgeInsets.zero,
-                        constraints: const BoxConstraints(),
-                        splashRadius: 12,
                       ),
+                      const SizedBox(height: 16),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          IconButton(
+                            onPressed: _isRunning ? _pauseTimer : _startTimer,
+                            icon: Icon(
+                              _isRunning ? Icons.pause : Icons.play_arrow,
+                              size: 32,
+                              color: Colors.white,
+                            ),
+                            iconSize: 32,
+                            splashRadius: 32,
+                          ),
+                          const SizedBox(width: 24),
+                          IconButton(
+                            onPressed: () {
+                              _resetTimer();
+                              _showSettings = false;
+                            },
+                            icon: const Icon(
+                              Icons.refresh,
+                              size: 32,
+                              color: Colors.white,
+                            ),
+                            iconSize: 32,
+                            splashRadius: 32,
+                          ),
+                          const SizedBox(width: 24),
+                          IconButton(
+                            onPressed: () {
+                              setState(() {
+                                _showSettings = !_showSettings;
+                              });
+                            },
+                            icon: const Icon(
+                              Icons.settings,
+                              size: 24,
+                              color: Colors.white70,
+                            ),
+                            splashRadius: 24,
+                          ),
+                          const SizedBox(width: 24),
+                          IconButton(
+                            onPressed: () {
+                              if (_history.isNotEmpty) {
+                                showDialog(
+                                  context: context,
+                                  builder: (context) =>
+                                      HistoryDialog(records: _history),
+                                );
+                              }
+                            },
+                            icon: const Icon(
+                              Icons.history,
+                              size: 24,
+                              color: Colors.white70,
+                            ),
+                            splashRadius: 24,
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              // 关闭按钮
+              if (Platform.isWindows)
+                Positioned(
+                  right: 16,
+                  top: 4,
+                  child: IconButton(
+                    onPressed: () {
+                      windowManager.close();
+                    },
+                    icon: const Icon(
+                      Icons.close,
+                      size: 16,
+                      color: Colors.white,
                     ),
-                  Center(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          _formatTime(_secondsRemaining),
-                          style: TextStyle(
-                            fontSize: _showSettings ? 48 : 60,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
+                    splashRadius: 12,
+                  ),
+                ),
+              // 设置面板和蒙层（放在最后，确保显示在最上层）
+              if (_showSettings)
+                Positioned.fill(
+                  child: Stack(
+                    children: [
+                      // 半透明蒙层
+                      Positioned.fill(
+                        child: GestureDetector(
+                          onTap: () {
+                            setState(() {
+                              _showSettings = false;
+                            });
+                          },
+                          child: Container(
+                            color: Colors.black.withOpacity(0.3),
                           ),
                         ),
-                        if (_showSettings) ...[
-                          const SizedBox(height: 4),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
+                      ),
+                      // 设置面板
+                      Center(
+                        child: Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(8),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.1),
+                                blurRadius: 8,
+                                spreadRadius: 2,
+                              ),
+                            ],
+                          ),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                '${_selectedMinutes}分钟',
+                                '设置时长: ${_selectedMinutes}分钟',
                                 style: const TextStyle(
                                   color: Colors.white,
-                                  fontSize: 12,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
                                 ),
                               ),
-                              const SizedBox(width: 8),
+                              const SizedBox(height: 16),
                               SizedBox(
-                                width: 160,
-                                height: 20,
+                                width: 240,
+                                height: 32,
                                 child: SliderTheme(
                                   data: SliderThemeData(
                                     activeTrackColor: Colors.white,
                                     inactiveTrackColor: Colors.red.shade300,
                                     thumbColor: Colors.white,
+                                    thumbShape: const RoundSliderThumbShape(
+                                      enabledThumbRadius: 8,
+                                      pressedElevation: 8,
+                                    ),
                                     overlayColor: Colors.white.withOpacity(0.3),
+                                    overlayShape: const RoundSliderOverlayShape(
+                                      overlayRadius: 16,
+                                    ),
                                     valueIndicatorColor: Colors.white,
                                     trackHeight: 2,
                                     valueIndicatorTextStyle: const TextStyle(
@@ -177,52 +350,12 @@ class _TimerPageState extends State<TimerPage> {
                               ),
                             ],
                           ),
-                        ],
-                        const SizedBox(height: 4),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            IconButton(
-                              onPressed: _isRunning ? _pauseTimer : _startTimer,
-                              icon: Icon(
-                                _isRunning ? Icons.pause : Icons.play_arrow,
-                                size: 24,
-                                color: Colors.white,
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            IconButton(
-                              onPressed: () {
-                                _resetTimer();
-                                _showSettings = false;
-                              },
-                              icon: const Icon(
-                                Icons.refresh,
-                                size: 24,
-                                color: Colors.white,
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            IconButton(
-                              onPressed: () {
-                                setState(() {
-                                  _showSettings = !_showSettings;
-                                });
-                              },
-                              icon: const Icon(
-                                Icons.settings,
-                                size: 24,
-                                color: Colors.white,
-                              ),
-                            ),
-                          ],
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
-                ],
-              ),
-            ),
+                ),
+            ],
           ),
         ),
       ),
