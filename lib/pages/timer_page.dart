@@ -123,74 +123,10 @@ class _TimerPageState extends State<TimerPage> {
                         splashRadius: 12,
                       ),
                     ),
-                  Positioned(
-                    left: 16,
-                    top: 0,
-                    child: IconButton(
-                      onPressed: () {
-                        setState(() {
-                          _showSettings = !_showSettings;
-                        });
-                      },
-                      icon: const Icon(
-                        Icons.settings,
-                        size: 16,
-                        color: Colors.white,
-                      ),
-                      padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(),
-                      splashRadius: 12,
-                    ),
-                  ),
                   Center(
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        if (_showSettings) ...[
-                          Container(
-                            margin: const EdgeInsets.only(bottom: 4),
-                            child: Column(
-                              children: [
-                                Text(
-                                  '${_selectedMinutes}分钟',
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 12,
-                                  ),
-                                ),
-                                const SizedBox(height: 2),
-                                SizedBox(
-                                  width: 200,
-                                  height: 20,
-                                  child: SliderTheme(
-                                    data: SliderThemeData(
-                                      activeTrackColor: Colors.white,
-                                      inactiveTrackColor: Colors.red.shade300,
-                                      thumbColor: Colors.white,
-                                      overlayColor:
-                                          Colors.white.withOpacity(0.3),
-                                      valueIndicatorColor: Colors.white,
-                                      trackHeight: 2,
-                                      valueIndicatorTextStyle: const TextStyle(
-                                        color: Colors.red,
-                                      ),
-                                    ),
-                                    child: Slider(
-                                      value: _selectedMinutes.toDouble(),
-                                      min: minMinutes.toDouble(),
-                                      max: maxMinutes.toDouble(),
-                                      divisions: maxMinutes - minMinutes,
-                                      label: '${_selectedMinutes}分钟',
-                                      onChanged: (value) {
-                                        _setTimer(value.round());
-                                      },
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
                         Text(
                           _formatTime(_secondsRemaining),
                           style: TextStyle(
@@ -199,6 +135,49 @@ class _TimerPageState extends State<TimerPage> {
                             color: Colors.white,
                           ),
                         ),
+                        if (_showSettings) ...[
+                          const SizedBox(height: 4),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(
+                                '${_selectedMinutes}分钟',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 12,
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              SizedBox(
+                                width: 160,
+                                height: 20,
+                                child: SliderTheme(
+                                  data: SliderThemeData(
+                                    activeTrackColor: Colors.white,
+                                    inactiveTrackColor: Colors.red.shade300,
+                                    thumbColor: Colors.white,
+                                    overlayColor: Colors.white.withOpacity(0.3),
+                                    valueIndicatorColor: Colors.white,
+                                    trackHeight: 2,
+                                    valueIndicatorTextStyle: const TextStyle(
+                                      color: Colors.red,
+                                    ),
+                                  ),
+                                  child: Slider(
+                                    value: _selectedMinutes.toDouble(),
+                                    min: minMinutes.toDouble(),
+                                    max: maxMinutes.toDouble(),
+                                    divisions: maxMinutes - minMinutes,
+                                    label: '${_selectedMinutes}分钟',
+                                    onChanged: (value) {
+                                      _setTimer(value.round());
+                                    },
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
                         const SizedBox(height: 4),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
@@ -219,6 +198,19 @@ class _TimerPageState extends State<TimerPage> {
                               },
                               icon: const Icon(
                                 Icons.refresh,
+                                size: 24,
+                                color: Colors.white,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            IconButton(
+                              onPressed: () {
+                                setState(() {
+                                  _showSettings = !_showSettings;
+                                });
+                              },
+                              icon: const Icon(
+                                Icons.settings,
                                 size: 24,
                                 color: Colors.white,
                               ),
