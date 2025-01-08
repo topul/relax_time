@@ -12,10 +12,14 @@ class TimerPage extends StatefulWidget {
 }
 
 class _TimerPageState extends State<TimerPage> {
-  static const int defaultDuration = 25 * 60; // 25分钟
+  static const int defaultDuration = 25 * 60;
+  static const int minMinutes = 1; // 最小1分钟
+  static const int maxMinutes = 120; // 最大120分钟
+  int _selectedMinutes = 25;
   int _secondsRemaining = defaultDuration;
   Timer? _timer;
   bool _isRunning = false;
+  bool _showSettings = false;
 
   @override
   void dispose() {
@@ -60,6 +64,16 @@ class _TimerPageState extends State<TimerPage> {
     });
   }
 
+  void _setTimer(int minutes) {
+    _timer?.cancel();
+    _timer = null;
+    setState(() {
+      _selectedMinutes = minutes;
+      _secondsRemaining = minutes * 60;
+      _isRunning = false;
+    });
+  }
+
   String _formatTime(int seconds) {
     int minutes = seconds ~/ 60;
     int remainingSeconds = seconds % 60;
@@ -88,10 +102,9 @@ class _TimerPageState extends State<TimerPage> {
           ),
           child: SafeArea(
             child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 16.0),
+              padding: const EdgeInsets.only(top: 4.0),
               child: Stack(
                 children: [
-                  // 关闭按钮
                   if (Platform.isWindows)
                     Positioned(
                       right: 16,
@@ -102,28 +115,91 @@ class _TimerPageState extends State<TimerPage> {
                         },
                         icon: const Icon(
                           Icons.close,
-                          size: 20,
+                          size: 16,
                           color: Colors.white,
                         ),
                         padding: EdgeInsets.zero,
                         constraints: const BoxConstraints(),
-                        splashRadius: 16,
+                        splashRadius: 12,
                       ),
                     ),
-                  // 主要内容
+                  Positioned(
+                    left: 16,
+                    top: 0,
+                    child: IconButton(
+                      onPressed: () {
+                        setState(() {
+                          _showSettings = !_showSettings;
+                        });
+                      },
+                      icon: const Icon(
+                        Icons.settings,
+                        size: 16,
+                        color: Colors.white,
+                      ),
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                      splashRadius: 12,
+                    ),
+                  ),
                   Center(
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
+                        if (_showSettings) ...[
+                          Container(
+                            margin: const EdgeInsets.only(bottom: 4),
+                            child: Column(
+                              children: [
+                                Text(
+                                  '${_selectedMinutes}分钟',
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                                const SizedBox(height: 2),
+                                SizedBox(
+                                  width: 200,
+                                  height: 20,
+                                  child: SliderTheme(
+                                    data: SliderThemeData(
+                                      activeTrackColor: Colors.white,
+                                      inactiveTrackColor: Colors.red.shade300,
+                                      thumbColor: Colors.white,
+                                      overlayColor:
+                                          Colors.white.withOpacity(0.3),
+                                      valueIndicatorColor: Colors.white,
+                                      trackHeight: 2,
+                                      valueIndicatorTextStyle: const TextStyle(
+                                        color: Colors.red,
+                                      ),
+                                    ),
+                                    child: Slider(
+                                      value: _selectedMinutes.toDouble(),
+                                      min: minMinutes.toDouble(),
+                                      max: maxMinutes.toDouble(),
+                                      divisions: maxMinutes - minMinutes,
+                                      label: '${_selectedMinutes}分钟',
+                                      onChanged: (value) {
+                                        _setTimer(value.round());
+                                      },
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
                         Text(
                           _formatTime(_secondsRemaining),
-                          style: const TextStyle(
-                            fontSize: 60,
+                          style: TextStyle(
+                            fontSize: _showSettings ? 48 : 60,
                             fontWeight: FontWeight.bold,
                             color: Colors.white,
                           ),
                         ),
-                        const SizedBox(height: 16),
+                        const SizedBox(height: 4),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
@@ -131,16 +207,19 @@ class _TimerPageState extends State<TimerPage> {
                               onPressed: _isRunning ? _pauseTimer : _startTimer,
                               icon: Icon(
                                 _isRunning ? Icons.pause : Icons.play_arrow,
-                                size: 28,
+                                size: 24,
                                 color: Colors.white,
                               ),
                             ),
-                            const SizedBox(width: 16),
+                            const SizedBox(width: 12),
                             IconButton(
-                              onPressed: _resetTimer,
+                              onPressed: () {
+                                _resetTimer();
+                                _showSettings = false;
+                              },
                               icon: const Icon(
                                 Icons.refresh,
-                                size: 28,
+                                size: 24,
                                 color: Colors.white,
                               ),
                             ),
